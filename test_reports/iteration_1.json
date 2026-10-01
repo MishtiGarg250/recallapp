@@ -1,0 +1,20 @@
+{
+  "summary": "Frontend-only mobile web review completed. Home, empty state, valid metadata fallback, local save, search, and detail navigation passed. Invalid URL validation failed because whitespace input is normalized into an encoded hostname and accepted.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [{"flow": "Manual paste/add validation", "issue": "Input 'not a url' is accepted and normalized to https://not%20a%20url/; extraction displays it as a saved candidate instead of showing the invalid-link error.", "affected_testIDs": ["url-input", "extract-button"]}],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_1.json"],
+  "action_items": ["Validate URL hostname/input before constructing the URL; reject whitespace-containing or otherwise malformed hostnames."],
+  "critical_code_review_comments": ["normalizeUrl only checks parsed.hostname, but URL parsing percent-encodes spaces, allowing malformed input such as 'not a url'.", "Several interactive controls lack testID attributes (folders New/create, settings clear/export, detail save/delete/open/share), reducing robust automated coverage."],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "80%"},
+  "seed_data_creation": "Created one local example.com link and one Reading folder during testing; data remains in browser AsyncStorage.",
+  "retest_needed": true,
+  "should_call_test_agent_after_fix": true,
+  "context_for_next_testing_agent": "Use the detail screen back arrow to return; tab text is not visible while the detail route is active. Clear archive before rerunning. Native Android Sharesheet cannot be invoked in web preview; app.json intent filter was inspected and is present.",
+  "rca_of_issue": "Reproduction: open Add, enter 'not a url', tap Extract page details. normalizeUrl trims then prepends https:// and new URL() converts spaces to %20; parsed.hostname is non-empty, so no error is thrown. Mitigation: reject whitespace/control characters and validate hostname labels before returning the normalized URL."
+}
