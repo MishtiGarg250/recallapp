@@ -17,6 +17,7 @@ export type Reminder = { id: string; itemId?: string; title: string; date: strin
 const ITEMS_KEY = "recall.items.v1";
 const FOLDERS_KEY = "recall.folders.v1";
 const REMINDERS_KEY = "recall.reminders.v1";
+const SHARE_FOLDER_KEY = "recall.settings.shareFolderId.v1";
 const LEGACY_LINKS_KEY = "nexuslink.links.v1";
 const LEGACY_FOLDERS_KEY = "nexuslink.folders.v1";
 
@@ -57,5 +58,67 @@ export async function loadFolders(): Promise<Folder[]> {
 export async function saveFolders(folders: Folder[]) { await AsyncStorage.setItem(FOLDERS_KEY, JSON.stringify(folders)); }
 export async function loadReminders(): Promise<Reminder[]> { return read(REMINDERS_KEY, []); }
 export async function saveReminders(reminders: Reminder[]) { await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(reminders)); }
-export async function clearAllData() { await AsyncStorage.multiRemove([ITEMS_KEY, FOLDERS_KEY, REMINDERS_KEY, LEGACY_LINKS_KEY, LEGACY_FOLDERS_KEY]); }
+export async function clearAllData() { await AsyncStorage.multiRemove([ITEMS_KEY, FOLDERS_KEY, REMINDERS_KEY, SHARE_FOLDER_KEY, LEGACY_LINKS_KEY, LEGACY_FOLDERS_KEY]); }
 export async function exportData() { const [items, folders, reminders] = await Promise.all([loadItems(), loadFolders(), loadReminders()]); return JSON.stringify({ app: "Recall", exportedAt: new Date().toISOString(), items, folders, reminders }, null, 2); }
+
+export async function getDefaultShareFolderId(): Promise<string | null> {
+  const value = await AsyncStorage.getItem(SHARE_FOLDER_KEY);
+  return value ? value : null;
+}
+export async function setDefaultShareFolderId(folderId: string | null) {
+  if (folderId) await AsyncStorage.setItem(SHARE_FOLDER_KEY, folderId);
+  else await AsyncStorage.removeItem(SHARE_FOLDER_KEY);
+}
+
+function escapeMd(text: string) { return text.replace(/\|/g, "\\|"); }
+
+export async function exportMarkdown(): Promise<string> {
+  const [items, folders, reminders] = await Promise.all([loadItems(), loadFolders(), loadReminders()]);
+  const folderName = (id?: string) => folders.find((f) => f.id === id)?.name ?? "Unfiled";
+  const date = new Date().toLocaleString();
+  const lines: string[] = [`# Recall archive`, `_Exported ${date} • ${items.length} items • ${folders.length} folders • ${reminders.length} reminders_`, ""];
+
+  // Group items by folder
+  const grouped = new Map<string, RecallItem[]>();
+  for (const item of items) {
+    const key = item.folderId ?? "__unfiled__";
+    const bucket = grouped.get(key) ?? [];
+    bucket.push(item);
+    grouped.set(key, bucket);
+  }
+
+  const folderOrder = [...folders.map((f) => f.id), "__unfiled__"];
+  for (const key of folderOrder) {
+    const bucket = grouped.get(key);
+    if (!bucket || !bucket.length) continue;
+    const name = key === "__unfiled__" ? "Unfiled" : folderName(key);
+    lines.push(`## ${escapeMd(name)}`);
+    for (const item of bucket) {
+      lines.push("");
+      const flags = [item.pinned ? "★ pinned" : null, item.archived ? "archived" : null].filter(Boolean).join(" • ");
+      lines.push(`### ${escapeMd(item.title)}${flags ? `  _(${flags})_` : ""}`);
+      lines.push(`_${item.type}${item.domain ? ` • ${item.domain}` : ""} • ${new Date(item.createdAt).toLocaleDateString()}_`);
+      if (item.url) lines.push(`[${item.url}](${item.url})`);
+      if (item.body) { lines.push(""); lines.push(item.body); }
+      if (item.type === "checklist" && item.checklist?.length) {
+        lines.push("");
+        for (const entry of item.checklist) lines.push(`- [${entry.done ? "x" : " "}] ${entry.text}`);
+      }
+      if (item.imageUri) lines.push(`_(image saved locally)_`);
+      if (item.voiceUri) lines.push(`_(voice snippet saved locally)_`);
+      if (item.notes) { lines.push(""); lines.push(`> ${item.notes.replace(/\n/g, "\n> ")}`); }
+      if (item.labels.length) lines.push(`Tags: ${item.labels.map((l) => `\`#${l}\``).join(" ")}`);
+    }
+    lines.push("");
+  }
+
+  if (reminders.length) {
+    lines.push("## Reminders");
+    for (const reminder of reminders) {
+      const when = reminder.location ? `${reminder.location.mode === "arrive" ? "On arrive at" : "On leave of"} ${reminder.location.label}` : `${new Date(reminder.date).toLocaleString()}${reminder.repeat !== "none" ? ` (${reminder.repeat})` : ""}`;
+      lines.push(`- [${reminder.completed ? "x" : " "}] ${escapeMd(reminder.title)} — _${when}_`);
+    }
+  }
+
+  return lines.join("\n");
+}

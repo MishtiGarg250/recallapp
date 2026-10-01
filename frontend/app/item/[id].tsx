@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Image, Linking, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MarkdownText } from "@/src/components/MarkdownText";
 import { useLinks } from "@/src/links/LinksContext";
 import type { ChecklistItem } from "@/src/links/storage";
 import { makeStyles, useTheme } from "@/src/theme";
@@ -87,7 +88,13 @@ export default function ItemDetailScreen() {
         <View style={styles.body}>
           <Text style={styles.kind}>{item.domain ?? item.type.toUpperCase()}</Text>
           <Text style={styles.title}>{item.title}</Text>
-          {item.body ? <Text style={styles.description}>{item.body}</Text> : null}
+          {item.body ? (
+            item.type === "note" || item.type === "snippet" ? (
+              <View style={{ marginTop: 14 }}><MarkdownText source={item.body} /></View>
+            ) : (
+              <Text style={styles.description}>{item.body}</Text>
+            )
+          ) : null}
 
           {item.type === "checklist" && item.checklist ? (
             <View style={{ marginTop: 20 }}>

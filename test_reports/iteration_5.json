@@ -1,0 +1,31 @@
+{
+  "summary": "Frontend-only testing for 3 new features (Markdown Notes, Share Into Folder, Export As Markdown). 5 of 6 acceptance criteria PASS. One critical regression: tapping export-md-button (and also export-json-button) throws an uncaught 'Share is not supported in this browser' error that displays the Expo red-screen overlay and blocks further interaction. Everything else — markdown rendering with testID markdown-body, markdown-hint under body-input, share-folder-picker + modal with share-folder-option-inbox, deep-link composer prefill, and regressions (add-reminder-fab, archive-search, capture-button) — passes cleanly. No /warnOfExpoGoPushUsage/i matches on launch.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "settings.tsx backupMarkdown / backup",
+        "issue": "Share.share rejects on web ('Share is not supported in this browser'). The try/finally has no catch, so the promise rejection surfaces as an uncaught error and triggers Expo's red error overlay. Task explicitly requires: 'export-md-button does not crash (Share.share may be a no-op on web — that's OK, must not throw)'. Reference: /app/frontend/app/(tabs)/settings.tsx:26 and :31",
+        "testID": "export-md-button",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "In /app/frontend/app/(tabs)/settings.tsx, wrap Share.share calls in both backup() (line ~26) and backupMarkdown() (line ~31) with try/catch so a Share rejection on web doesn't bubble up as an uncaught error. Alternative: branch on Platform.OS === 'web' and fall back to navigator.clipboard.writeText(...) or window.alert, since the preview is used for QA. Minimal fix example: try { await Share.share(...) } catch (e) { /* ignore – web preview has no sharesheet */ } finally { setBusy(null); }"
+  ],
+  "critical_code_review_comments": [
+    "settings.tsx backup/backupMarkdown have try/finally but no catch — any Share.share rejection (common on web) becomes an uncaught promise and shows the Expo error overlay. Should always catch when calling platform-only APIs from a Pressable handler."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "83% (5/6 criteria pass; export-md crashes)"},
+  "seed_data_creation": "Cleared localStorage before each major sub-test. Created one 'MD check' note to verify markdown rendering.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "After the Share.share catch is added, re-tap export-json-button and export-md-button in order on Settings and confirm no red-screen overlay and no uncaught page errors. Also confirm share-folder-picker still opens afterward (previously it was unreachable due to the overlay in a single-session run).",
+  "rca_of_issue": "On web, React Native Web's Share.share implementation rejects with 'Share is not supported in this browser' unless navigator.share exists in the browser. settings.tsx wraps the call in try/finally but omits catch, so the rejection propagates to the Pressable onPress handler, is turned into an unhandled promise rejection, and renders the Expo dev error overlay (see /tmp/01_home.png -> after tap screenshot). Reproduction: open Settings tab → tap export-md-button on web preview. Mitigation: add catch block (ignore or Platform.OS==='web' fallback). Verified markdown rendering and share-folder-picker both work in isolation when the overlay isn't blocking the UI."
+}

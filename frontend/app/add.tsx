@@ -8,7 +8,7 @@ import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, Sc
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLinks } from "@/src/links/LinksContext";
 import { extractMetadata, normalizeUrl, type ExtractedMetadata } from "@/src/links/metadata";
-import type { ChecklistItem, ItemType } from "@/src/links/storage";
+import { getDefaultShareFolderId, type ChecklistItem, type ItemType } from "@/src/links/storage";
 import { makeStyles, useTheme } from "@/src/theme";
 
 const types: { key: ItemType; label: string; icon: keyof typeof Feather.glyphMap }[] = [
@@ -67,6 +67,8 @@ export default function AddScreen() {
     setType("link");
     setUrl(params.url);
     void handleExtract(params.url);
+    // When launched from the Android Sharesheet, pre-select the user's default share folder.
+    void getDefaultShareFolderId().then((defaultId) => { if (defaultId) setFolderId(defaultId); });
   }, [params.url, handleExtract]);
 
   async function pasteUrl() {
@@ -216,6 +218,9 @@ export default function AddScreen() {
           <View>
             <Text style={styles.label}>{type === "note" ? "NOTE" : "WHAT TO REMEMBER"}</Text>
             <TextInput testID="body-input" value={body} onChangeText={setBody} multiline placeholder={type === "note" ? "Write a thought you want to find again…" : "Add a line to go with the voice snippet…"} placeholderTextColor={colors.muted} style={[styles.textInput, styles.inputBox, styles.multiline]} />
+            {type === "note" ? (
+              <Text style={styles.markdownHint} testID="markdown-hint">Markdown works: **bold**  *italic*  # heading  - bullet</Text>
+            ) : null}
           </View>
         ) : null}
 
@@ -312,6 +317,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   inputError: { borderColor: colors.error },
   textInput: { color: colors.onSurface, fontSize: 15 },
   multiline: { minHeight: 110, paddingTop: 12, paddingBottom: 12, textAlignVertical: "top" },
+  markdownHint: { color: colors.muted, fontSize: 11, marginTop: 7, fontFamily: Platform.OS === "ios" ? "Courier" : "monospace" },
   extractButton: { minHeight: 46, borderRadius: 14, backgroundColor: colors.brandSecondary, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 13 },
   extractText: { color: colors.onBrandPrimary, fontWeight: "700", fontSize: 14 },
   disabled: { opacity: 0.45 },

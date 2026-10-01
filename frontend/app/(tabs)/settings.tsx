@@ -1,11 +1,11 @@
 import { Feather } from "@expo/vector-icons";
-import { useState } from "react";
-import { Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Modal, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecallLogo } from "@/src/components/RecallLogo";
 import { useLinks } from "@/src/links/LinksContext";
 import { requestNotificationPermissions } from "@/src/links/notifications";
-import { clearAllData, exportData } from "@/src/links/storage";
+import { clearAllData, exportData, exportMarkdown, getDefaultShareFolderId, setDefaultShareFolderId } from "@/src/links/storage";
 import { usesNativeTabs } from "@/src/navigation";
 import { makeStyles, useTheme } from "@/src/theme";
 
@@ -14,22 +14,39 @@ export default function SettingsScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const { items, folders, reminders, refresh } = useLinks();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<null | "json" | "md">(null);
   const [notifStatus, setNotifStatus] = useState<"idle" | "granted" | "denied">("idle");
+  const [shareFolderId, setShareFolderId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => { void getDefaultShareFolderId().then(setShareFolderId); }, []);
 
   async function backup() {
-    setBusy(true);
+    setBusy("json");
     try {
       await Share.share({ message: await exportData(), title: "Recall backup" });
+    } catch {
+      // Share may be unavailable (e.g. web preview); no-op.
     } finally {
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  async function backupMarkdown() {
+    setBusy("md");
+    try {
+      await Share.share({ message: await exportMarkdown(), title: "Recall markdown export" });
+    } catch {
+      // Share may be unavailable (e.g. web preview); no-op.
+    } finally {
+      setBusy(null);
     }
   }
 
   function clear() {
     Alert.alert("Clear everything?", "This removes every saved item, folder, and reminder from this device.", [
       { text: "Cancel", style: "cancel" },
-      { text: "Clear", style: "destructive", onPress: async () => { await clearAllData(); await refresh(); } },
+      { text: "Clear", style: "destructive", onPress: async () => { await clearAllData(); setShareFolderId(null); await refresh(); } },
     ]);
   }
 
@@ -37,6 +54,14 @@ export default function SettingsScreen() {
     const ok = await requestNotificationPermissions();
     setNotifStatus(ok ? "granted" : "denied");
   }
+
+  async function chooseShareFolder(id: string | null) {
+    setShareFolderId(id);
+    await setDefaultShareFolderId(id);
+    setPickerOpen(false);
+  }
+
+  const shareFolderName = shareFolderId ? (folders.find((f) => f.id === shareFolderId)?.name ?? "Inbox") : "Inbox (default)";
 
   return (
     <View style={styles.screen}>
@@ -50,6 +75,18 @@ export default function SettingsScreen() {
           <Row icon="shield" title="On-device only" detail="Your Recall never leaves this phone." colors={colors} />
           <View style={styles.divider} />
           <Row icon="database" title={`${items.length} saved ${items.length === 1 ? "item" : "items"}`} detail={`${folders.length} ${folders.length === 1 ? "folder" : "folders"} · ${reminders.length} ${reminders.length === 1 ? "reminder" : "reminders"}`} colors={colors} />
+        </View>
+
+        <Text style={styles.section}>SHARESHEET</Text>
+        <View style={styles.panel}>
+          <Pressable testID="share-folder-picker" onPress={() => setPickerOpen(true)} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
+            <View style={styles.actionIcon}><Feather name="share-2" size={18} color={colors.brandPrimary} /></View>
+            <View style={styles.actionCopy}>
+              <Text style={styles.actionTitle}>Default folder for shared links</Text>
+              <Text style={styles.actionDetail} numberOfLines={1}>{shareFolderName}</Text>
+            </View>
+            <Feather name="chevron-right" size={19} color={colors.muted} />
+          </Pressable>
         </View>
 
         <Text style={styles.section}>NOTIFICATIONS</Text>
@@ -74,11 +111,20 @@ export default function SettingsScreen() {
 
         <Text style={styles.section}>BACKUP & RESTORE</Text>
         <View style={styles.panel}>
-          <Pressable testID="export-button" disabled={busy} onPress={() => void backup()} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
+          <Pressable testID="export-json-button" disabled={busy !== null} onPress={() => void backup()} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
             <View style={styles.actionIcon}><Feather name="download" size={18} color={colors.brandPrimary} /></View>
             <View style={styles.actionCopy}>
-              <Text style={styles.actionTitle}>{busy ? "Preparing backup…" : "Export archive"}</Text>
-              <Text style={styles.actionDetail}>Share a portable JSON copy</Text>
+              <Text style={styles.actionTitle}>{busy === "json" ? "Preparing backup…" : "Export as JSON"}</Text>
+              <Text style={styles.actionDetail}>Portable, machine-readable copy</Text>
+            </View>
+            <Feather name="chevron-right" size={19} color={colors.muted} />
+          </Pressable>
+          <View style={styles.divider} />
+          <Pressable testID="export-md-button" disabled={busy !== null} onPress={() => void backupMarkdown()} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
+            <View style={styles.actionIcon}><Feather name="file-text" size={18} color={colors.brandPrimary} /></View>
+            <View style={styles.actionCopy}>
+              <Text style={styles.actionTitle}>{busy === "md" ? "Preparing Markdown…" : "Export as Markdown"}</Text>
+              <Text style={styles.actionDetail}>Readable in Obsidian, Bear, Notion</Text>
             </View>
             <Feather name="chevron-right" size={19} color={colors.muted} />
           </Pressable>
@@ -104,6 +150,37 @@ export default function SettingsScreen() {
           <Text style={styles.version}>Version 1.0 · Private by design</Text>
         </View>
       </View>
+
+      <Modal transparent animationType="fade" visible={pickerOpen} onRequestClose={() => setPickerOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
+          <Pressable style={[styles.modal, { paddingBottom: insets.bottom + 22 }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Where should shared links land?</Text>
+            <Text style={styles.modalBody}>Pick a default folder for links coming from the Android Sharesheet.</Text>
+
+            <Pressable testID="share-folder-option-inbox" onPress={() => void chooseShareFolder(null)} style={styles.folderOption}>
+              <Feather name="inbox" size={18} color={shareFolderId === null ? colors.brandPrimary : colors.muted} />
+              <Text style={[styles.folderOptionText, shareFolderId === null && styles.folderOptionTextActive]}>Inbox (no folder)</Text>
+              {shareFolderId === null ? <Feather name="check" size={18} color={colors.brandPrimary} /> : null}
+            </Pressable>
+
+            {folders.map((folder) => {
+              const active = shareFolderId === folder.id;
+              return (
+                <Pressable key={folder.id} testID={`share-folder-option-${folder.id}`} onPress={() => void chooseShareFolder(folder.id)} style={styles.folderOption}>
+                  <View style={[styles.folderDot, { backgroundColor: folder.color }]} />
+                  <Text style={[styles.folderOptionText, active && styles.folderOptionTextActive]}>{folder.name}</Text>
+                  {active ? <Feather name="check" size={18} color={colors.brandPrimary} /> : null}
+                </Pressable>
+              );
+            })}
+
+            {folders.length === 0 ? (
+              <Text style={styles.noFolders}>Create folders in the Archive tab to assign a default here.</Text>
+            ) : null}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -149,4 +226,14 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   aboutTitle: { color: colors.brandPrimary, fontFamily: "Georgia", fontWeight: "500", fontSize: 22, marginTop: 10 },
   aboutText: { color: colors.onSurfaceSecondary, fontSize: 13 },
   version: { color: colors.muted, fontSize: 12, marginTop: 6 },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(28,26,25,0.35)" },
+  modal: { backgroundColor: colors.surface, paddingHorizontal: 20, paddingTop: 12, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+  modalHandle: { alignSelf: "center", width: 42, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong, marginBottom: 20 },
+  modalTitle: { color: colors.onSurface, fontFamily: "Georgia", fontSize: 22, fontWeight: "500" },
+  modalBody: { color: colors.muted, fontSize: 13, marginTop: 6, marginBottom: 16 },
+  folderOption: { minHeight: 54, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.surfaceSecondary, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+  folderOptionText: { flex: 1, color: colors.onSurface, fontSize: 15, fontWeight: "600" },
+  folderOptionTextActive: { color: colors.brandPrimary, fontWeight: "800" },
+  folderDot: { width: 12, height: 12, borderRadius: 6 },
+  noFolders: { color: colors.muted, fontSize: 13, textAlign: "center", paddingVertical: 10 },
 }));
