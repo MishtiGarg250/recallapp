@@ -1,36 +1,36 @@
 {
-  "app_name": "NexusLink",
-  "personality": "3 Editorial Mobile LIGHT",
-  "personality_one_liner": "A calm, magazine-grade archive for web links with metadata extraction, folders, and on-device privacy.",
+  "app_name": "Recall",
+  "personality": "3 Editorial Mobile LIGHT (with Material You expressive structural layout)",
+  "personality_one_liner": "A calm, editorial personal archive for links, notes, reminders, and self-messages with zero account friction.",
   "color": {
-    "surface": "#FDFBF7",
-    "onSurface": "#2C2A29",
-    "surfaceSecondary": "#F5F1EB",
-    "onSurfaceSecondary": "#4A4745",
+    "surface": "#FAF8F5",
+    "onSurface": "#1C1B18",
+    "surfaceSecondary": "#F3EFEA",
+    "onSurfaceSecondary": "#4A4741",
     "surfaceTertiary": "#EAE4DC",
-    "onSurfaceTertiary": "#6B6764",
-    "surfaceInverse": "#1C1A19",
-    "onSurfaceInverse": "#FDFBF7",
-    "brand": "#8C5E3C",
-    "brandPrimary": "#8C5E3C",
-    "onBrandPrimary": "#FFFFFF",
-    "brandSecondary": "#A67B5B",
-    "onBrandSecondary": "#FFFFFF",
-    "brandTertiary": "#D6C7B8",
-    "onBrandTertiary": "#2C2A29",
-    "success": "#3B6D51",
-    "onSuccess": "#FFFFFF",
-    "warning": "#8C6A3C",
-    "onWarning": "#FFFFFF",
-    "error": "#9E3C3C",
-    "onError": "#FFFFFF",
-    "info": "#3C5E8C",
-    "onInfo": "#FFFFFF",
-    "border": "#E2DBD1",
-    "borderStrong": "#C8BEB2",
-    "divider": "#E8E2D8",
-    "muted": "#7A7570",
-    "onBrand": "#FFFFFF"
+    "onSurfaceTertiary": "#6B665E",
+    "surfaceInverse": "#1C1B18",
+    "onSurfaceInverse": "#FAF8F5",
+    "brand": "#C85A32",
+    "brandPrimary": "#C85A32",
+    "onBrandPrimary": "#FAF8F5",
+    "brandSecondary": "#E07A5F",
+    "onBrandSecondary": "#FAF8F5",
+    "brandTertiary": "#F4DCD5",
+    "onBrandTertiary": "#7A2E12",
+    "success": "#2D6A4F",
+    "onSuccess": "#F0FDF4",
+    "warning": "#B45309",
+    "onWarning": "#FFFBEB",
+    "error": "#991B1B",
+    "onError": "#FEF2F2",
+    "info": "#1E3A8A",
+    "onInfo": "#EFF6FF",
+    "border": "#E6DFD5",
+    "borderStrong": "#C85A32",
+    "divider": "#EFEAE2",
+    "muted": "#7A756D",
+    "onBrand": "#FAF8F5"
   },
   "typography": {
     "displayFontFamily": "Playfair Display",
@@ -44,7 +44,7 @@
     }
   },
   "spacing": {
-    "rule": "Generous vertical breathing room with magazine-style padding and clean horizontal rhythm",
+    "rule": "Generous editorial padding with comfortable vertical rhythm and touch targets >= 44pt",
     "xs": 4,
     "sm": 8,
     "md": 12,
@@ -59,18 +59,18 @@
     "lg": 20,
     "pill": 999
   },
-  "shadow_tier": "0",
+  "shadow_tier": "1",
   "navigation": "bottom_tabs",
-  "icon_set": "Feather",
+  "icon_set": "Phosphor",
   "glassmorphism": {
     "enabled": false,
     "do's": [
-      "Use clean editorial dividers and warm paper textures",
-      "Rely on typography hierarchy and generous negative space"
+      "Use clean paper-white and cream editorial surfaces",
+      "Rely on typography and generous whitespace for hierarchy"
     ],
     "dont's": [
-      "No heavy SaaS drop shadows or glossy gradients",
-      "No neon colors or synthetic borders"
+      "No heavy glass blurs that interfere with reading flow",
+      "No neon colors or saturated gradients"
     ]
   },
   "platform_libraries": {
@@ -87,65 +87,73 @@
   },
   "screens": [
     {
-      "name": "HomeFeed",
-      "purpose": "Display all saved links in a clean editorial feed with search, folder filtering, and metadata previews.",
+      "name": "Daily Inbox",
+      "purpose": "Unified feed of today's reminders, shared links, saved notes, and quick self-messages.",
       "states": {
-        "loading": "Centered warm spinner with subtle pulse animation",
-        "empty": "Warm paper illustration, 'No links archived yet', and 'Add your first link' primary CTA button",
-        "error": "Readable notice with a retry button to reload local storage"
+        "loading": "Centered minimalist spinner with warm brand terracotta tone",
+        "empty": "Editorial empty state with notebook illustration and quick capture prompt",
+        "error": "Warm red error banner with readable retry action"
       },
-      "layout": "Sticky top bar with app title and quick share/paste button, search bar with filter chips for folders, followed by vertical list of editorial link cards with domain, title, description, and tags."
+      "layout": "Header with app title 'Recall', search bar, and quick filter chips (All, Links, Reminders, Notes, Voice). Sectioned feed with Today's Reminders card, shared link cards with scraped metadata preview, and quick self-message input."
     },
     {
-      "name": "AddLinkModal",
-      "purpose": "Manually paste URLs or receive shared URLs via Android Sharesheet with automatic metadata extraction.",
+      "name": "Capture & Add",
+      "purpose": "Manual creation and Android Sharesheet ingestion hub for links, voice snippets, checklists, and text notes.",
       "states": {
-        "loading": "Extracting page title, description, and preview image indicator",
-        "empty": "Empty URL input field with a 'Paste from Clipboard' shortcut button",
-        "error": "URL validation error banner with instructions"
+        "loading": "Saving state indicator with check animation",
+        "empty": "Select a content type to begin capturing",
+        "error": "Failed to parse metadata or save snippet; tap to retry"
       },
-      "layout": "Modal sheet with URL input, real-time metadata preview card (title, extracted image, domain), folder selector dropdown, and tag input field."
+      "layout": "Tabbed entry selector (Link, Note, Checklist, Voice/Text), URL auto-fetch card with scraped title/image preview, folder & label selector, and bottom sticky Save button."
     },
     {
-      "name": "FoldersScreen",
-      "purpose": "Organize saved links into customized folders and categories.",
+      "name": "Archive & Search",
+      "purpose": "Full-text search, folder management, pinned items, and archive browsing.",
       "states": {
-        "loading": "Skeleton rows for folder cards",
-        "empty": "Icon illustration with 'No folders created' and '+ New Folder' CTA",
-        "error": "Folder load error message with retry button"
+        "loading": "Filtering search index...",
+        "empty": "No saved items match your query. Try searching by keyword or folder.",
+        "error": "Index read error; tap to rebuild search index"
       },
-      "layout": "Grid of folder cards displaying item counts, thumbnail collage, and custom color tags, with a floating action button for creating new folders."
+      "layout": "Sticky search header with instant filter pills, Folders horizontal shelf, Pinned section, and categorized item list with swipe actions (Pin, Archive, Delete)."
     },
     {
-      "name": "LinkDetailScreen",
-      "purpose": "View full extracted article metadata, notes, tags, and open or share the link.",
+      "name": "Reminders Hub",
+      "purpose": "Manage one-time, repeating, and location-based (arrive/leave) reminders like WhatsApp self-messages.",
       "states": {
-        "loading": "Header shimmer effect with loading state for metadata",
-        "empty": "Fallback view with basic domain and URL display",
-        "error": "Metadata refresh error message"
+        "loading": "Loading reminders schedule...",
+        "empty": "No active reminders set. Tap '+' to create one.",
+        "error": "Location service or notification permission error; tap to configure"
       },
-      "layout": "Editorial header image with gradient scrim, title in Playfair Display, domain pill badge, editable personal notes section, folder and tag pills, and sticky bottom action bar for Open, Share, and Edit."
+      "layout": "Segmented control (Upcoming, Completed, Location-based), grouped reminder cards with repeat badges and location trigger toggles, sticky primary action button."
     },
     {
-      "name": "SettingsScreen",
-      "purpose": "Manage on-device storage, data export/import, and app preferences with zero account required.",
+      "name": "Settings & Export",
+      "purpose": "Manage local database backup, export to JSON/Markdown, notification permissions, and app preferences.",
       "states": {
-        "loading": "Static render with local storage stats calculation",
-        "empty": "Storage empty state showing 0 KB used",
-        "error": "Export/Import error dialog"
+        "loading": "Exporting local database archive...",
+        "empty": "No backup history found",
+        "error": "Export failed; ensure storage permission is granted"
       },
-      "layout": "Clean settings groups for Storage & Privacy (100% on-device), Backup & Restore (JSON export/import), Metadata extraction settings, and About NexusLink."
+      "layout": "Grouped setting rows with icon containers, local storage usage stats, Export/Backup buttons, and app version info."
     }
   ],
   "images": {
-    "empty_state_illustration": {
-      "url": "https://images.unsplash.com/photo-1674501994038-e0da371ceba7?crop=entropy&cs=srgb&fm=jpg&q=85",
-      "alt": "Minimalist paper textures and bookmarks"
+    "onboarding_hero": {
+      "url": "https://images.unsplash.com/photo-1611079830811-865ff4428d17",
+      "alt": "Editorial minimalist notebook and pen"
     },
-    "hero_banner": {
-      "url": "https://images.unsplash.com/photo-1690284331959-c3b9430e7620?crop=entropy&cs=srgb&fm=jpg&q=85",
-      "alt": "Editorial abstract texture for headers"
+    "empty_state_notebook": {
+      "url": "https://images.unsplash.com/photo-1573848953384-3be02021eb0b",
+      "alt": "Clean paper stationery pad"
     }
   },
-  "instructions_to_main_agent": "Implement NexusLink as an Expo React Native Android app using Editorial Mobile LIGHT personality (Playfair Display and DM Sans, warm off-white and terracotta palette). Ensure 100% on-device persistence (AsyncStorage/SQLite), Android Sharesheet intent handler for link capture, automatic metadata extractor (title, description, domain, preview image), folders, tags, search, and full CRUD link detail/edit flow. Every screen must handle loading, empty, and error states cleanly with touch targets >= 44x44pt and safe area insets respected."
+  "instructions_to_main_agent": [
+    "Build 'Recall' as a polished Android app using React Native / Expo with TypeScript, following the Editorial Mobile LIGHT personality combined with Material You expressive layout patterns.",
+    "Implement zero-account local on-device persistence (AsyncStorage / SQLite) for links, notes, images, checklists, and voice snippets.",
+    "Support Android Sharesheet receiver simulation, link metadata extraction (OpenGraph title, image, description), and manual paste.",
+    "Provide Google Keep-like features: folders, labels, pinning, archive, full-text search, and daily inbox view.",
+    "Implement comprehensive reminder scheduling: one-time, repeating, and location-based (arrive/leave location triggers) with local notifications.",
+    "Adhere strictly to touch targets >= 44pt, safe area insets, loading/empty/error states on all screens, and zero banned colors (no indigo, no purple, no navy blue).",
+    "Use Playfair Display for headings and DM Sans for body text. Max font weight 500."
+  ]
 }

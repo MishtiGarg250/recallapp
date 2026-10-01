@@ -44,11 +44,25 @@ export async function extractMetadata(url: string): Promise<ExtractedMetadata> {
   }
 }
 
+// Match a hostname label like "example", "co", "my-site". No whitespace, no punctuation.
+const HOSTNAME_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
+
 export function normalizeUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) throw new Error("Paste a link to continue.");
+  if (/\s/.test(trimmed)) throw new Error("That does not look like a valid link.");
   const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  const parsed = new URL(withProtocol);
-  if (!parsed.hostname) throw new Error("That does not look like a valid link.");
+  let parsed: URL;
+  try {
+    parsed = new URL(withProtocol);
+  } catch {
+    throw new Error("That does not look like a valid link.");
+  }
+  const host = parsed.hostname;
+  if (!host) throw new Error("That does not look like a valid link.");
+  const labels = host.split(".");
+  if (labels.length < 2 || labels.some((label) => !HOSTNAME_LABEL.test(label))) {
+    throw new Error("That does not look like a valid link.");
+  }
   return parsed.toString();
 }

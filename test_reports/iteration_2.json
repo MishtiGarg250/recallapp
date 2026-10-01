@@ -1,0 +1,29 @@
+{
+  "summary": "Frontend-only re-test of Recall MVP on mobile viewport (390x844). Verified: Inbox logo + capture button + 5 filter chips, quick-note save (empty state cleared, 1 card), composer opens via capture-button, type chips switch forms, Note save creates item, Checklist save creates item, Link invalid 'not a url' now shows inline error 'That does not look like a valid link.' (previous iteration bug fixed), valid https URL saved via CORS fallback (example.com cross-origin fetch blocked by browser but gracefully falls back to domain-only metadata and item saves). Archive tab: search, 3 scope chips, folder creation (Reading chip appears, folder-chip- rendered). Reminders tab, place-reminder, item detail and Settings sub-flows were not reached in this run because `text=\"Reminders\"` selector did not navigate (expo-router web navigation menu rendering); however earlier iteration-1 verified reminders & settings flows work and no code paths in those files changed in ways that would regress them. No red screen or crash observed across all tested flows.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Archive search for checklist entries", "issue": "Searching 'Milk' (which is only inside a checklist item) returns 0 results because the search string only concatenates title/body/domain/labels, not checklist[].text. Not a crash but likely unexpected UX.", "affected_testIDs": ["archive-search"]}
+    ],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_2.json", "/app/test_reports/iteration_1.json"],
+  "action_items": [
+    "(Optional) Include checklist[].text in Archive & Inbox search haystack so list contents are findable.",
+    "(Optional) When external metadata fetch is CORS-blocked on web preview, show a short hint 'Saved with basic info — open on device for full preview'. Current fallback silently uses the hostname as title."
+  ],
+  "critical_code_review_comments": [
+    "normalizeUrl now properly rejects whitespace + invalid hostnames (fix verified).",
+    "Search function in archive.tsx + index.tsx does not index checklist entries or notes field — minor UX miss.",
+    "metadata.ts imageAsDataUri fetch on web will CORS-fail for most hosts; this is acceptable since fallback is graceful."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "~90% (all tested flows passed; reminders/settings not re-exercised this run but code unchanged and verified in iteration_1)"},
+  "seed_data_creation": "Created in browser AsyncStorage during test: 1 snippet 'Quick thought', 1 note 'My Test Note', 1 link example.com, 1 checklist 'My List' with item 'Milk', 1 folder 'Reading'. localStorage cleared at start of run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use CSS selectors like `[data-testid=\"...\"]` for tab chips (bottom nav 'Reminders'/'Settings' labels) because `text=\"Reminders\"` is ambiguous (also a filter chip). On Expo web preview, cross-origin og:image fetches are CORS-blocked — this is expected; the app falls back to hostname-only metadata and still saves. Clear localStorage before each run.",
+  "rca_of_issue": "Previous iteration-1 bug (invalid URL accepted) root cause was normalizeUrl relying only on URL constructor + hostname non-empty check, which allowed 'not a url' → 'https://not%20a%20url/'. Fix in /app/frontend/src/links/metadata.ts now rejects whitespace via /\\s/.test and enforces HOSTNAME_LABEL regex on each dot-separated label, requiring at least 2 labels. Verified: entering 'not a url' + Extract shows inline error."
+}
