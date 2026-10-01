@@ -1,0 +1,32 @@
+{
+  "summary": "Tested onboarding flow on Expo web preview at mobile viewport (375x667). The onboarding UI itself (4 slides, dots, Skip/Next buttons, Open Recall label on last slide) renders correctly and advances as expected with proper testIDs and copy. However, 3 CRITICAL navigation bugs were found caused by the OnboardingGate caching the onboarded flag in state. After tapping 'Open Recall' or 'Skip', the AsyncStorage flag is correctly set (verified recall.onboarded.v1=1 in localStorage) but the user is immediately bounced back to /onboarding because the gate's `onboarded` state in _layout.tsx is stale (still false). Similarly, 'Replay the welcome tour' from Settings removes the flag and router.replace('/onboarding') is called, but the gate's cached `onboarded=true` immediately redirects back to the Inbox. Returning-user flow (reload after flag persisted) works correctly. No console errors; 0 matches for warnOfExpoGoPushUsage.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "OnboardingGate / _layout.tsx", "issue": "After tapping 'Open Recall' on slide 4, URL stays at /onboarding and slide 1 is re-shown even though recall.onboarded.v1='1' is set in storage. Gate's useState `onboarded` is stale after markOnboarded(). Reference: /app/frontend/app/_layout.tsx:40-58", "testID": "onboarding-next", "priority": "CRITICAL"},
+      {"component": "OnboardingGate / Skip flow", "issue": "Tapping onboarding-skip calls finish() which sets the flag then router.replace('/'), but the gate's cached onboarded=false re-routes back to /onboarding. Inbox never appears on first skip. Reference: /app/frontend/app/onboarding.tsx:51-54 + /app/frontend/app/_layout.tsx:53-58", "testID": "onboarding-skip", "priority": "CRITICAL"},
+      {"component": "Settings replay-onboarding", "issue": "Tapping replay-onboarding removes the flag and router.replace('/onboarding'), but gate's cached onboarded=true triggers redirect back to '/'. Onboarding never re-appears. Reference: /app/frontend/app/(tabs)/settings.tsx:95-97 + /app/frontend/app/_layout.tsx:53-58", "testID": "replay-onboarding", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Onboarding completion → Inbox navigation", "issue": "AsyncStorage flag persisted correctly (verified via localStorage inspection) but React state in OnboardingGate is stale, causing redirect loop back to /onboarding. Only a full reload lands on Inbox.", "affected_testIDs": ["onboarding-next", "onboarding-skip", "replay-onboarding", "capture-button"]}
+    ],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/test_reports/ob_slide4.png", "/app/test_reports/after_open_recall.png", "/app/test_reports/settings_replay.png", "/app/test_reports/inbox_after.png"],
+  "action_items": [
+    "Fix OnboardingGate in /app/frontend/app/_layout.tsx to react to the flag changing at runtime. Options: (a) expose a setter/context value that onboarding.tsx and settings.tsx can call after markOnboarded()/removal, (b) re-read hasOnboarded() whenever `segments` changes, or (c) subscribe via a shared store (zustand/context) so the gate reruns its redirect logic with fresh state. Current implementation only reads AsyncStorage once on mount, so programmatic router.replace() calls lead to a stale-state redirect bounce.",
+    "After fix, re-run all 6 scenarios: first-time load → onboarding, Next x4 → Inbox, Skip → Inbox, reload persists Inbox, Settings replay-onboarding → slide 1."
+  ],
+  "critical_code_review_comments": [
+    "OnboardingGate holds `onboarded` in local state without any mechanism to invalidate when the underlying AsyncStorage flag changes mid-session. This is the root cause of all three bugs.",
+    "Onboarding.finish() awaits markOnboarded() then calls router.replace('/'), but the gate's effect runs before any re-read of storage, so the redirect-back-to-onboarding fires on the same tick."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only review)", "frontend": "~45% (UI renders fine; 3/6 functional scenarios fail due to gate caching)"},
+  "seed_data_creation": "None. Used window.localStorage.clear() to simulate first-time user.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The onboarding slides, testIDs, copy, dots, and 'Open Recall' button label all render correctly on the Expo web preview (375x667). The failures are purely in the OnboardingGate state management. Verify fix by: 1) clear localStorage, reload → onboarding; 2) tap next x4 → Inbox (capture-button visible, URL leaves /onboarding); 3) clear + reload + Skip → Inbox; 4) from Inbox, tap Settings tab then replay-onboarding → slide 1 of onboarding visible. 0 expo push warnings expected.",
+  "rca_of_issue": "ROOT CAUSE: /app/frontend/app/_layout.tsx OnboardingGate component stores the onboarded flag in React state read once on mount via useEffect. When onboarding.tsx calls markOnboarded() + router.replace('/'), the gate's redirect effect fires with onboarded=false (stale) and bounces back to /onboarding. Symmetrically, Settings replay removes the flag but gate state is still true, so router.replace('/onboarding') is overridden back to '/'. REPRODUCTION: Open preview URL in a fresh browser profile (or run window.localStorage.clear() then reload). Click Next 4 times. Observe URL remains /onboarding and slide 1 is shown even though localStorage['recall.onboarded.v1'] = '1'. MITIGATION: Make the gate reactive to the flag — e.g., expose a React context setter the onboarding/settings screens call after markOnboarded()/removeItem, or re-fetch hasOnboarded() whenever segments change."
+}

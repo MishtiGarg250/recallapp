@@ -1,8 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Modal, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecallLogo } from "@/src/components/RecallLogo";
+import { useOnboarding } from "@/app/_layout";
 import { useLinks } from "@/src/links/LinksContext";
 import { requestNotificationPermissions } from "@/src/links/notifications";
 import { clearAllData, exportData, exportMarkdown, getDefaultShareFolderId, setDefaultShareFolderId } from "@/src/links/storage";
@@ -10,10 +13,12 @@ import { usesNativeTabs } from "@/src/navigation";
 import { makeStyles, useTheme } from "@/src/theme";
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useStyles();
   const { items, folders, reminders, refresh } = useLinks();
+  const { setOnboarded } = useOnboarding();
   const [busy, setBusy] = useState<null | "json" | "md">(null);
   const [notifStatus, setNotifStatus] = useState<"idle" | "granted" | "denied">("idle");
   const [shareFolderId, setShareFolderId] = useState<string | null>(null);
@@ -84,6 +89,23 @@ export default function SettingsScreen() {
             <View style={styles.actionCopy}>
               <Text style={styles.actionTitle}>Default folder for shared links</Text>
               <Text style={styles.actionDetail} numberOfLines={1}>{shareFolderName}</Text>
+            </View>
+            <Feather name="chevron-right" size={19} color={colors.muted} />
+          </Pressable>
+          <View style={styles.divider} />
+          <Pressable
+            testID="replay-onboarding"
+            onPress={async () => {
+              await AsyncStorage.removeItem("recall.onboarded.v1");
+              setOnboarded(false);
+              router.replace("/onboarding");
+            }}
+            style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}
+          >
+            <View style={styles.actionIcon}><Feather name="refresh-cw" size={18} color={colors.brandPrimary} /></View>
+            <View style={styles.actionCopy}>
+              <Text style={styles.actionTitle}>Replay the welcome tour</Text>
+              <Text style={styles.actionDetail}>See the four intro slides again</Text>
             </View>
             <Feather name="chevron-right" size={19} color={colors.muted} />
           </Pressable>

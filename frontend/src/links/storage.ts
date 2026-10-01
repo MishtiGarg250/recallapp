@@ -18,8 +18,16 @@ const ITEMS_KEY = "recall.items.v1";
 const FOLDERS_KEY = "recall.folders.v1";
 const REMINDERS_KEY = "recall.reminders.v1";
 const SHARE_FOLDER_KEY = "recall.settings.shareFolderId.v1";
+const ONBOARDED_KEY = "recall.onboarded.v1";
 const LEGACY_LINKS_KEY = "nexuslink.links.v1";
 const LEGACY_FOLDERS_KEY = "nexuslink.folders.v1";
+
+export async function hasOnboarded(): Promise<boolean> {
+  return (await AsyncStorage.getItem(ONBOARDED_KEY)) === "1";
+}
+export async function markOnboarded() {
+  await AsyncStorage.setItem(ONBOARDED_KEY, "1");
+}
 
 async function read<T>(key: string, fallback: T): Promise<T> {
   const value = await AsyncStorage.getItem(key);
@@ -58,7 +66,7 @@ export async function loadFolders(): Promise<Folder[]> {
 export async function saveFolders(folders: Folder[]) { await AsyncStorage.setItem(FOLDERS_KEY, JSON.stringify(folders)); }
 export async function loadReminders(): Promise<Reminder[]> { return read(REMINDERS_KEY, []); }
 export async function saveReminders(reminders: Reminder[]) { await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(reminders)); }
-export async function clearAllData() { await AsyncStorage.multiRemove([ITEMS_KEY, FOLDERS_KEY, REMINDERS_KEY, SHARE_FOLDER_KEY, LEGACY_LINKS_KEY, LEGACY_FOLDERS_KEY]); }
+export async function clearAllData() { await AsyncStorage.multiRemove([ITEMS_KEY, FOLDERS_KEY, REMINDERS_KEY, SHARE_FOLDER_KEY, ONBOARDED_KEY, LEGACY_LINKS_KEY, LEGACY_FOLDERS_KEY]); }
 export async function exportData() { const [items, folders, reminders] = await Promise.all([loadItems(), loadFolders(), loadReminders()]); return JSON.stringify({ app: "Recall", exportedAt: new Date().toISOString(), items, folders, reminders }, null, 2); }
 
 export async function getDefaultShareFolderId(): Promise<string | null> {
