@@ -1,0 +1,151 @@
+{
+  "app_name": "NexusLink",
+  "personality": "3 Editorial Mobile LIGHT",
+  "personality_one_liner": "A calm, magazine-grade archive for web links with metadata extraction, folders, and on-device privacy.",
+  "color": {
+    "surface": "#FDFBF7",
+    "onSurface": "#2C2A29",
+    "surfaceSecondary": "#F5F1EB",
+    "onSurfaceSecondary": "#4A4745",
+    "surfaceTertiary": "#EAE4DC",
+    "onSurfaceTertiary": "#6B6764",
+    "surfaceInverse": "#1C1A19",
+    "onSurfaceInverse": "#FDFBF7",
+    "brand": "#8C5E3C",
+    "brandPrimary": "#8C5E3C",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#A67B5B",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#D6C7B8",
+    "onBrandTertiary": "#2C2A29",
+    "success": "#3B6D51",
+    "onSuccess": "#FFFFFF",
+    "warning": "#8C6A3C",
+    "onWarning": "#FFFFFF",
+    "error": "#9E3C3C",
+    "onError": "#FFFFFF",
+    "info": "#3C5E8C",
+    "onInfo": "#FFFFFF",
+    "border": "#E2DBD1",
+    "borderStrong": "#C8BEB2",
+    "divider": "#E8E2D8",
+    "muted": "#7A7570",
+    "onBrand": "#FFFFFF"
+  },
+  "typography": {
+    "displayFontFamily": "Playfair Display",
+    "textFontFamily": "DM Sans",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous vertical breathing room with magazine-style padding and clean horizontal rhythm",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "0",
+  "navigation": "bottom_tabs",
+  "icon_set": "Feather",
+  "glassmorphism": {
+    "enabled": false,
+    "do's": [
+      "Use clean editorial dividers and warm paper textures",
+      "Rely on typography hierarchy and generous negative space"
+    ],
+    "dont's": [
+      "No heavy SaaS drop shadows or glossy gradients",
+      "No neon colors or synthetic borders"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "HomeFeed",
+      "purpose": "Display all saved links in a clean editorial feed with search, folder filtering, and metadata previews.",
+      "states": {
+        "loading": "Centered warm spinner with subtle pulse animation",
+        "empty": "Warm paper illustration, 'No links archived yet', and 'Add your first link' primary CTA button",
+        "error": "Readable notice with a retry button to reload local storage"
+      },
+      "layout": "Sticky top bar with app title and quick share/paste button, search bar with filter chips for folders, followed by vertical list of editorial link cards with domain, title, description, and tags."
+    },
+    {
+      "name": "AddLinkModal",
+      "purpose": "Manually paste URLs or receive shared URLs via Android Sharesheet with automatic metadata extraction.",
+      "states": {
+        "loading": "Extracting page title, description, and preview image indicator",
+        "empty": "Empty URL input field with a 'Paste from Clipboard' shortcut button",
+        "error": "URL validation error banner with instructions"
+      },
+      "layout": "Modal sheet with URL input, real-time metadata preview card (title, extracted image, domain), folder selector dropdown, and tag input field."
+    },
+    {
+      "name": "FoldersScreen",
+      "purpose": "Organize saved links into customized folders and categories.",
+      "states": {
+        "loading": "Skeleton rows for folder cards",
+        "empty": "Icon illustration with 'No folders created' and '+ New Folder' CTA",
+        "error": "Folder load error message with retry button"
+      },
+      "layout": "Grid of folder cards displaying item counts, thumbnail collage, and custom color tags, with a floating action button for creating new folders."
+    },
+    {
+      "name": "LinkDetailScreen",
+      "purpose": "View full extracted article metadata, notes, tags, and open or share the link.",
+      "states": {
+        "loading": "Header shimmer effect with loading state for metadata",
+        "empty": "Fallback view with basic domain and URL display",
+        "error": "Metadata refresh error message"
+      },
+      "layout": "Editorial header image with gradient scrim, title in Playfair Display, domain pill badge, editable personal notes section, folder and tag pills, and sticky bottom action bar for Open, Share, and Edit."
+    },
+    {
+      "name": "SettingsScreen",
+      "purpose": "Manage on-device storage, data export/import, and app preferences with zero account required.",
+      "states": {
+        "loading": "Static render with local storage stats calculation",
+        "empty": "Storage empty state showing 0 KB used",
+        "error": "Export/Import error dialog"
+      },
+      "layout": "Clean settings groups for Storage & Privacy (100% on-device), Backup & Restore (JSON export/import), Metadata extraction settings, and About NexusLink."
+    }
+  ],
+  "images": {
+    "empty_state_illustration": {
+      "url": "https://images.unsplash.com/photo-1674501994038-e0da371ceba7?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Minimalist paper textures and bookmarks"
+    },
+    "hero_banner": {
+      "url": "https://images.unsplash.com/photo-1690284331959-c3b9430e7620?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Editorial abstract texture for headers"
+    }
+  },
+  "instructions_to_main_agent": "Implement NexusLink as an Expo React Native Android app using Editorial Mobile LIGHT personality (Playfair Display and DM Sans, warm off-white and terracotta palette). Ensure 100% on-device persistence (AsyncStorage/SQLite), Android Sharesheet intent handler for link capture, automatic metadata extractor (title, description, domain, preview image), folders, tags, search, and full CRUD link detail/edit flow. Every screen must handle loading, empty, and error states cleanly with touch targets >= 44x44pt and safe area insets respected."
+}
